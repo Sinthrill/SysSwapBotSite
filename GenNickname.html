@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<script src="formList.js"></script>
+	<script src="speciesList.js"></script>
+	<script src="natureList.js"></script>
+	<script src="genderList.js"></script>
+	<script src="abiList.js"></script>
+	<script language="Javascript">
+		function generateNickname() {
+			var species = document.getElementById("speciesSelect").value;
+			var form = document.getElementById("formSelect").value;
+			var shiny = document.getElementById("shinySelect");
+			var level = document.getElementById("lowLevel").value;
+			var gender = document.getElementById("genderSelect").value;
+			var ability = document.getElementById("abilitySelect").value;
+			var scale = document.getElementById("scaleSelect").value;
+			var nature = parseInt(document.getElementById("natureSelect").value);
+			var IVactive = document.getElementById("IVSelect").checked;
+			var IVspread = document.forms["IVs"].elements;
+			var speciesObj = speciesList.find((e) => e.species == species);
+			var speciesNum = parseInt(speciesObj.number);
+			let SGANumber = 0;
+			SGANumber += parseInt(level);
+			SGANumber += (shiny.checked) ? 0 : 9;
+			switch (gender) {
+				case "Male":
+					break;
+				case "Female":
+					SGANumber += 3;
+					break;
+				case "Genderless":
+					SGANumber += 6;
+					break;
+				default:
+					break;
+			}
+			SGANumber += parseInt(ability);
+			var nick = "";
+			nick += numB36(speciesNum);
+			if (form != "-1") {
+				formNum = parseInt(form);
+				nick += formNum.toString(36);
+			}
+			nick += SGANumber.toString(36);
+			nick += Array.from(scale)[0];
+			nick += nature.toString(36);
+			if (IVactive) {
+				for (i = 0; i < IVspread.length; i++) {
+					IVValue = parseInt(IVspread[i].value);
+					if (IVValue == 0) {
+						nick += "Z";
+						continue;
+					}
+					nick += IVValue.toString(36);
+				}
+			}
+			document.getElementById("Nick").value = nick.toUpperCase();
+		}
+
+		function filterNatureList() {
+			var natureOptions = "";
+			for (natureOpt in natureList) {
+				natureOptions += "<option value='" + natureList[natureOpt].number + "'>" + natureList[natureOpt].nature + "</option>";
+			}
+			document.getElementById("natureSelect").innerHTML = natureOptions;
+		}
+
+		function filterSpeciesList() {
+			var speciesOptions = "";
+			for (speciesOpt in speciesList) {
+				speciesOptions += "<option value='" + speciesList[speciesOpt].species + "'>" + speciesList[speciesOpt].species + "</option>";
+			}
+			document.getElementById("speciesSelect").innerHTML = speciesOptions;
+		}
+
+		function filterFormList() {
+			var species = document.getElementById("speciesSelect").value;
+			var formObj = formList.filter((e) => e.species == species);
+			if (formObj.length < 2) document.getElementById("formSelect").innerHTML = "<option value=\"-1\">No Form</option>";
+			else {
+				var formOptions = "";
+				for (formOpt in formObj) {
+					formOptions += "<option value='" + formObj[formOpt].formindex + "'>" + formObj[formOpt].form + "</option>";
+				}
+				document.getElementById("formSelect").innerHTML = formOptions;
+			}
+			filterGenderList();
+		}
+
+		function filterGenderList() {
+			var genderOptions = "";
+			var species = document.getElementById("speciesSelect").value;
+			var form = document.getElementById("formSelect").value;
+			if (form == "-1") form = 0;
+			var formObj = genderList.filter((f) => f.formindex == form && f.species == species);
+			for (genderOpt in formObj) {
+				genderOptions += "<option value='" + formObj[genderOpt].gender + "'>" + formObj[genderOpt].gender + "</option>";
+			}
+			document.getElementById("genderSelect").innerHTML = genderOptions;
+			filterAbiList();
+		}
+
+		function filterAbiList() {
+			var abiOptions = "";
+			var species = document.getElementById("speciesSelect").value;
+			var form = document.getElementById("formSelect").value;
+			if (form == "-1") form = 0;
+			var formObj = abiList.filter((f) => f.formindex == form && f.species == species);
+			for (abiOpt in formObj) {
+				abiOptions += "<option value='" + formObj[abiOpt].abiIndex + "'>" + formObj[abiOpt].ability + "</option>";
+			}
+			document.getElementById("abilitySelect").innerHTML = abiOptions;
+		}
+
+		function loadIVList() {
+			var IVOptions = "";
+			var IVFields = document.forms["IVs"].elements;
+			for (i = 31; i >= 0; i--) {
+				IVOptions += "<option value='" + i + "'>" + i + "</option>";
+			}
+			for (j = 0; j < IVFields.length; j++) {
+				IVFields[j].innerHTML = IVOptions;
+			}
+		}
+
+		function numB36(s) {
+			var a = s.toString(36);
+			if ((a.length % 2) > 0) {
+				a = "0" + a;
+			}
+			return a;
+		}
+
+		function toggleIVrows() {
+			var useIVs = document.getElementById("IVSelect");
+			var IVrow1 = document.getElementById("IV_row1");
+			var IVrow2 = document.getElementById("IV_row2");
+			IVrow1.style.display = useIVs.checked ? 'table-row' : 'none';
+			IVrow2.style.display = useIVs.checked ? 'table-row' : 'none';
+		}
+
+		window.onload = function loadLists() {
+			filterSpeciesList();
+			filterNatureList();
+			filterGenderList();
+			filterAbiList();
+			loadIVList();
+		}
+	</script>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Fira+Code&display=swap" rel="stylesheet">
+	<style>
+		select {
+			font-size: 16px;
+		}
+	</style>
+</head>
+<body style="font-size:24px;">
+	<form id="IVs" name="IVs"></form>
+	<div class="IVTable" style="display:none;"></div>
+	<h2 align="center">Genning Nickname Calculator</h2>
+	<table cellpadding="5%" cellspacing="5px" align="center" style="border-spacing: 0 12px;">
+		<tr>
+			<td align="right">Species: </td>
+			<td><select name="speciesSelect" id="speciesSelect" onChange="filterFormList()" required><option></option></select></td>
+		</tr>
+		<tr>
+			<td align="right">Form: </td>
+			<td><select name="formSelect" id="formSelect" onChange="filterGenderList()"><option value="-1">No Form</option></select></td>
+		</tr>
+		<tr>
+			<td align="right">Shiny: </td>
+			<td><input type="checkbox" name="shinySelect" id="shinySelect"></td>
+		</tr>
+		<tr>
+			<td align="right">Level: </td>
+			<td><select name="lowLevel" id="lowLevel"><option value="0">Level 100</option><option value="18">Lowest Legal</option></select></td>
+		</tr>
+		<tr>
+			<td align="right">Gender: </td>
+			<td><select name="genderSelect" id="genderSelect" required><option></option></select></td>
+		</tr>
+		<tr>
+			<td align="right">Ability: </td>
+			<td>
+				<select name="abilitySelect" id="abilitySelect" required>
+					<option value="0">First</option>
+					<option value="1">Second</option>
+					<option value="2">Hidden</option>
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<td align="right">Scale: </td>
+			<td>
+				<select name="scaleSelect" id="scaleSelect" required>
+					<option selected>Random</option>
+					<option>Tiny</option>
+					<option>Jumbo</option>
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<td align="right">Nature: </td>
+			<td><select name="natureSelect" id="natureSelect" required><option></option></select></td>
+		</tr>
+		<tr>
+			<td align="right"><label for="IVSelect">Not Max IVs: </label>
+			<td><input type="checkbox" id="IVSelect" name="IVSelect" onclick="toggleIVrows()"></td>
+		</tr>
+		<tr id="IV_row1" style="display:none;">
+			<td align="right" style="width: 33%">HP: <select name="HP" id="HP" form="IVs"><option></option></select></td>
+			<td align="center" style="width: 33%">Attack: <select name="ATK" id="ATK" form="IVs"><option></option></select></td>
+			<td align="left" style="width: 33%">Defense: <select name="DEF" id="DEF" form="IVs"><option></option></select></td>
+		</tr>
+		<tr id="IV_row2" style="display:none;">
+			<td align="right" style="width: 33%">Speed: <select name="SPE" id="SPE" form="IVs"><option></option></select></td>
+			<td align="center" style="width: 33%">SpAtk: <select name="SPA" id="SPA" form="IVs"><option></option></select></td>
+			<td align="left" style="width: 33%">SpDef: <select name="SPD" id="SPD" form="IVs"><option></option></select></td>
+		</tr>
+		<tr height="40px">
+			<td align="center" width="100%" colspan="3" style="font-size:30px;">DON'T FORGET THE FRESH WATER</td>
+		</tr>
+		<tr>
+			<td align="right"><button type="button" onClick="generateNickname()" style="font-size:20px;">Generate Nickname</button></td>
+			<td align="center" colspan="2"><textarea name="Nick" id="Nick" rows="1" style="resize:none;font-size:30px;text-align:center;vertical-align:middle;font-family:'Fira Code', monospace;"></textarea></td>
+		</tr>
+	</table>
+</body>
+</html>
