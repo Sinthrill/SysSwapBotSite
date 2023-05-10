@@ -6,45 +6,51 @@
 	<script src="natureList.js"></script>
 	<script src="genderList.js"></script>
 	<script src="abiList.js"></script>
+	<script src="ballList.js"></script>
+	<script src="teraList.js"></script>
 	<script language="Javascript">
 		function generateNickname() {
 			var species = document.getElementById("speciesSelect").value;
 			var form = document.getElementById("formSelect").value;
 			var shiny = document.getElementById("shinySelect");
-			var level = document.getElementById("lowLevel").value;
+			var level = parseInt(document.getElementById("lowLevel").value);
 			var gender = document.getElementById("genderSelect").value;
-			var ability = document.getElementById("abilitySelect").value;
-			var scale = document.getElementById("scaleSelect").value;
+			var ability = parseInt(document.getElementById("abilitySelect").value);
+			var scale = parseInt(document.getElementById("scaleSelect").value);
 			var nature = parseInt(document.getElementById("natureSelect").value);
+			var ball = parseInt(document.getElementById("ballSelect").value);
+			var tera = parseInt(document.getElementById("teraSelect").value);
 			var IVactive = document.getElementById("IVSelect").checked;
 			var IVspread = document.forms["IVs"].elements;
-			var speciesObj = speciesList.find((e) => e.species == species);
-			var speciesNum = parseInt(speciesObj.number);
-			let SGANumber = 0;
-			SGANumber += parseInt(level);
-			SGANumber += (shiny.checked) ? 0 : 9;
+			var specObj = speciesList.find((e) => e.species == species);
+            let SpecNumber = parseInt(specObj.number);
+			let SetReqNumber = 0;
+			SetReqNumber += SpecNumber * 25272000;
+            if (form != "-1") {
+                SetReqNumber += parseInt(form) * 1263600;
+            }
+            SetReqNumber += nature * 50544;
+            SetReqNumber += tera * 2808;
+            SetReqNumber += ball * 108;
+            SetReqNumber += scale * 36;
+            SetReqNumber += level * 18;
+            SetReqNumber += (shiny.checked) ? 9 : 0;
 			switch (gender) {
 				case "Male":
 					break;
 				case "Female":
-					SGANumber += 3;
+                    SetReqNumber += 3;
 					break;
 				case "Genderless":
-					SGANumber += 6;
+                    SetReqNumber += 6;
 					break;
 				default:
 					break;
 			}
-			SGANumber += parseInt(ability);
+            SetReqNumber += ability;
 			var nick = "";
-			nick += numB36(speciesNum);
-			if (form != "-1") {
-				formNum = parseInt(form);
-				nick += formNum.toString(36);
-			}
-			nick += SGANumber.toString(36);
-			nick += Array.from(scale)[0];
-			nick += nature.toString(36);
+            SetReqr64 = Base64.fromInt(SetReqNumber);
+			nick += "000000".substring(SetReqr64.length) + SetReqr64;
 			if (IVactive) {
 				for (i = 0; i < IVspread.length; i++) {
 					IVValue = parseInt(IVspread[i].value);
@@ -52,18 +58,30 @@
 						nick += "Z";
 						continue;
 					}
-					nick += IVValue.toString(36);
+					nick += IVValue.toString(36).toUpperCase();
 				}
 			}
-			document.getElementById("Nick").value = nick.toUpperCase();
+			document.getElementById("Nick").value = nick;
 		}
 
-		function filterNatureList() {
+		function filterStaticLists() {
 			var natureOptions = "";
 			for (natureOpt in natureList) {
 				natureOptions += "<option value='" + natureList[natureOpt].number + "'>" + natureList[natureOpt].nature + "</option>";
 			}
 			document.getElementById("natureSelect").innerHTML = natureOptions;
+
+			var ballOptions = "";
+			for (ballOpt in ballList) {
+				ballOptions += "<option value='" + ballList[ballOpt].number + "'>" + ballList[ballOpt].ball + "</option>";
+			}
+			document.getElementById("ballSelect").innerHTML = ballOptions;
+
+			var teraOptions = "";
+			for (teraOpt in teraList) {
+				teraOptions += "<option value='" + teraList[teraOpt].number + "'>" + teraList[teraOpt].type + "</option>";
+			}
+			document.getElementById("teraSelect").innerHTML = teraOptions;
 		}
 
 		function filterSpeciesList() {
@@ -132,6 +150,38 @@
 			return a;
 		}
 
+        Base64 = (function () {
+            var digitsStr =
+            //   0       8       16      24      32      40      48      56     63
+            //   v       v       v       v       v       v       v       v      v
+				"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz+-";
+            var digits = digitsStr.split('');
+            var digitsMap = {};
+            for (var i = 0; i < digits.length; i++) {
+                digitsMap[digits[i]] = i;
+            }
+            return {
+                fromInt: function (int32) {
+                    var result = '';
+                    while (true) {
+                        result = digits[int32 & 0x3f] + result;
+                        int32 >>>= 6;
+                        if (int32 === 0)
+                            break;
+                    }
+                    return result;
+                },
+                toInt: function (digitsStr) {
+                    var result = 0;
+                    var digits = digitsStr.split('');
+                    for (var i = 0; i < digits.length; i++) {
+                        result = (result << 6) + digitsMap[digits[i]];
+                    }
+                    return result;
+                }
+            };
+        })();
+
 		function toggleIVrows() {
 			var useIVs = document.getElementById("IVSelect");
 			var IVrow1 = document.getElementById("IV_row1");
@@ -142,7 +192,7 @@
 
 		window.onload = function loadLists() {
 			filterSpeciesList();
-			filterNatureList();
+			filterStaticLists();
 			filterGenderList();
 			filterAbiList();
 			loadIVList();
@@ -155,11 +205,14 @@
 		select {
 			font-size: 16px;
 		}
+		.disclaimer {
+			font-size: 12px;
+			align-content: center;
+		}
 	</style>
 </head>
 <body style="font-size:24px;">
 	<form id="IVs" name="IVs"></form>
-	<div class="IVTable" style="display:none;"></div>
 	<h2 align="center">Genning Nickname Calculator</h2>
 	<table cellpadding="5%" cellspacing="5px" align="center" style="border-spacing: 0 12px;">
 		<tr>
@@ -176,7 +229,7 @@
 		</tr>
 		<tr>
 			<td align="right">Level: </td>
-			<td><select name="lowLevel" id="lowLevel"><option value="0">Level 100</option><option value="18">Lowest Legal</option></select></td>
+			<td><select name="lowLevel" id="lowLevel"><option value="0">Level 100</option><option value="1">Lowest Legal</option></select></td>
 		</tr>
 		<tr>
 			<td align="right">Gender: </td>
@@ -196,15 +249,23 @@
 			<td align="right">Scale: </td>
 			<td>
 				<select name="scaleSelect" id="scaleSelect" required>
-					<option selected>Random</option>
-					<option>Tiny</option>
-					<option>Jumbo</option>
+					<option value="0" selected>Random</option>
+					<option value="1">Tiny</option>
+					<option value="2">Jumbo</option>
 				</select>
 			</td>
 		</tr>
 		<tr>
 			<td align="right">Nature: </td>
 			<td><select name="natureSelect" id="natureSelect" required><option></option></select></td>
+		</tr>
+		<tr>
+			<td align="right">Ball: </td>
+			<td><select name="ballSelect" id="ballSelect" required><option></option></select></td>
+		</tr>
+		<tr>
+			<td align="right">Tera: </td>
+			<td><select name="teraSelect" id="teraSelect" required><option></option></select></td>
 		</tr>
 		<tr>
 			<td align="right"><label for="IVSelect">Not Max IVs: </label>
@@ -228,5 +289,12 @@
 			<td align="center" colspan="2"><textarea name="Nick" id="Nick" rows="1" style="resize:none;font-size:30px;text-align:center;vertical-align:middle;font-family:'Fira Code', monospace;"></textarea></td>
 		</tr>
 	</table>
+	<hr />
+
+	<div class="disclaimer">
+	<p align="center">Disclaimer: Choosing Master Ball on a breedable mon will force a wild encounter to be rolled.<br />
+		Wild encounter mons with 6IV are sus, I recommend not doing max IVs if choosing Master Ball.<br />
+		Cherish, Sport, and Safari balls are present but still illegal. Don't use them.</p>
+	</div>	
 </body>
 </html>
