@@ -150,37 +150,51 @@
 			return a;
 		}
 
-        Base64 = (function () {
-            var digitsStr =
+        Base64 = {
+            _digitsStr :
             //   0       8       16      24      32      40      48      56     63
             //   v       v       v       v       v       v       v       v      v
-				"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz+-";
-            var digits = digitsStr.split('');
-            var digitsMap = {};
-            for (var i = 0; i < digits.length; i++) {
-                digitsMap[digits[i]] = i;
-            }
-            return {
-                fromInt: function (int32) {
-                    var result = '';
-                    while (true) {
-                        result = digits[int32 & 0x3f] + result;
-                        int32 >>>= 6;
-                        if (int32 === 0)
-                            break;
-                    }
-                    return result;
-                },
-                toInt: function (digitsStr) {
-                    var result = 0;
-                    var digits = digitsStr.split('');
-                    for (var i = 0; i < digits.length; i++) {
-                        result = (result << 6) + digitsMap[digits[i]];
-                    }
-                    return result;
-                }
-            };
-        })();
+				"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz+-",
+			fromInt: function (number) {
+				if (isNaN(Number(number)) || number === null ||
+					number === Number.POSITIVE_INFINITY)
+					throw "The input is not valid";
+				if (number < 0)
+					throw "Can't represent negative numbers now";
+
+				var rixit; // like 'digit', only in some non-decimal radix 
+				var residual = Math.floor(number);
+				var result = '';
+				while (true) {
+					rixit = residual % 64
+					// console.log("rixit : " + rixit);
+					// console.log("result before : " + result);
+					result = this._digitsStr[rixit] + result;
+					// console.log("result after : " + result);
+					// console.log("residual before : " + residual);
+					residual = Math.floor(residual / 64);
+					// console.log("residual after : " + residual);
+
+					if (residual == 0)
+						break;
+				}
+				return result;
+			},
+			toInt: function (rixits) {
+				var result = 0;
+				// console.log("rixits : " + rixits);
+				// console.log("rixits.split('') : " + rixits.split(''));
+				rixits = rixits.split('');
+				for (var e = 0; e < rixits.length; e++) {
+					// console.log("_Rixits.indexOf(" + rixits[e] + ") : " + 
+					// this._Rixits.indexOf(rixits[e]));
+					// console.log("result before : " + result);
+					result = (result * 64) + this._digitsStr.indexOf(rixits[e]);
+					// console.log("result after : " + result);
+				}
+				return result;
+			}
+        };
 
 		function toggleIVrows() {
 			var useIVs = document.getElementById("IVSelect");
